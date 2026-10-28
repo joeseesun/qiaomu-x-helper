@@ -200,6 +200,10 @@
       <form id="post-time-form" class="post-time-form"><input id="post-time-new" type="time" required="" aria-label="新增发布时间"><button class="secondary">添加时间</button></form>
     </details>
     <details class="fine-print"><summary>怎么发出去的？</summary><p>「填入 X」会打开 X 的发帖框，填好正文和附件。排了时间的帖子，会帮你在 X 自带的定时面板里选好时间，你点「确认」和「定时」后，由 X 准时发出，电脑关机也不影响。没有提前填入的帖子，到点会提醒你。插件不会替你点发送。</p></details>
+    <details id="site-link" class="fine-print"><summary>网站联动 · 乔木随想</summary>
+      <p class="hint">在 www.qiaomu.ai/notes/ 点「发到 X」或「发到小红书」时，由本扩展打开发帖页，自动填好全文和图片，最后由你点发布。需要允许访问乔木网站、乔木博客（下载图片）和小红书创作服务平台。</p>
+      <label class="toggle-row"><span>允许乔木随想发到 X 和小红书<small id="site-link-status">未开启</small></span><input id="site-link-toggle" type="checkbox"></label>
+    </details>
   </section>
   <section id="xnav" class="panel" hidden="">
     <div class="page-heading"><div><h2>X 侧栏</h2><p class="hint">选择 X 左侧栏显示哪些入口、怎么排序，也可以加上自己的链接。保存后，打开的 X 页面立即更新。</p></div><button id="xnav-add" class="secondary" type="button"><span data-icon="Plus"></span>添加入口</button></div>

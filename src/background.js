@@ -4,6 +4,7 @@ import { senderContext } from './context.js';
 import { IndexedAnnotations } from './annotations.js';
 import { Contacts } from './contacts.js';
 import { Posts, blobChunk } from './posts.js';
+import { validShare, fetchSiteMedia, pickForX, pickForXhs, xhsDraft, siteLinkEnabled, syncBridge, SITE_LINK_ORIGINS, XHS_PUBLISH_URL } from './site-link.js';
 import { backupFile,parseBackup,backupSummary,restoreBackup,BACKUP_KEYS } from './backup.js';
 import { Bookmarks, bookmarkPath } from './bookmarks.js';
 import { Workspace } from './workspace.js';
@@ -21,6 +22,10 @@ const posts = new Posts();
 // A fill job binds one queued post to the X tab this extension opened for it.
 const fillJobs = new Map();
 const FILL_TTL = 30 * 60000;
+// A 小红书 job binds a note's images to the publish tab this extension opened for it.
+const xhsJobs = new Map();
+const XHS_TTL = 10 * 60000;
+const SITE_MESSAGES = { site: ['site-share'], xhs: ['xhs-fill-pending', 'xhs-media-chunk', 'xhs-filled'] };
 const excerpt = text => (text || '').replace(/\s+/g, ' ').trim().slice(0, 90) || '（只有附件）';
 async function notifyPages(){ try { await chrome.runtime.sendMessage({ type: 'posts-changed' }); } catch {} }
 async function syncPosts(){
@@ -63,6 +68,36 @@ chrome.alarms?.onAlarm.addListener(async alarm => {
 });
 chrome.runtime.onStartup?.addListener(() => void syncPosts().catch(() => {}));
 chrome.runtime.onInstalled?.addListener(() => void syncPosts().catch(() => {}));
+const bridge = () => void syncBridge().catch(() => {});
+chrome.runtime.onStartup?.addListener(bridge);
+chrome.runtime.onInstalled?.addListener(bridge);
+chrome.permissions?.onAdded?.addListener(bridge);
+chrome.permissions?.onRemoved?.addListener(bridge);
+// Inject the filler once the 小红书 page this extension opened has loaded (it may first redirect to login).
+chrome.tabs.onUpdated?.addListener((tabId, info, tab) => {
+  const job = xhsJobs.get(tabId);
+  if (!job || info.status !== 'complete' || !tab.url?.startsWith('https://creator.xiaohongshu.com/')) return;
+  if (Date.now() - job.at > XHS_TTL) { xhsJobs.delete(tabId); return; }
+  void chrome.scripting.executeScript({ target: { tabId }, files: ['xhs-fill.js'] }).catch(() => {});
+});
+async function siteShare(message) {
+  if (!await siteLinkEnabled()) throw Error('请在乔木 X 助手的「发帖」页重新打开「网站联动」。');
+  const { target, text, media } = validShare(message);
+  const files = await fetchSiteMedia(media);
+  if (target === 'x') {
+    const { use, skipped } = pickForX(files), ids = [];
+    for (const file of use) ids.push(await posts.addMedia(file, ids));
+    const post = await posts.save({ text, mediaIds: ids.map(m => m.id), status: 'draft' });
+    await notifyPages();
+    await openFill(post.id);
+    return { opened: true, attached: use.length, skipped };
+  }
+  const { use, skipped } = pickForXhs(files);
+  const { title, body } = xhsDraft(text);
+  const tab = await chrome.tabs.create({ url: XHS_PUBLISH_URL });
+  xhsJobs.set(tab.id, { title, body, files: use, skipped, pending: true, at: Date.now() });
+  return { opened: true, attached: use.length, skipped };
+}
 const secure = chrome.storage.local.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' });
 const engine = new Engine({
   get: async key => { await secure; return chrome.storage.local.get(key); },
@@ -92,6 +127,20 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
       return {};
     }
     if (who === 'none' || !message || typeof message.type !== 'string') throw new Error('消息来源无效');
+    // Pages outside X may only use their own handlers; everything below assumes X content or settings.
+    if (who === 'site' || who === 'xhs') {
+      if (!SITE_MESSAGES[who].includes(message.type)) throw new Error('消息来源无效');
+      if (who === 'site') return siteShare(message);
+      if (message.type === 'xhs-fill-pending') {
+        const job = xhsJobs.get(sender.tab.id); if (!job?.pending || Date.now() - job.at > XHS_TTL) return null; job.pending = false;
+        return { title: job.title, body: job.body, skipped: job.skipped, media: job.files.map((f, index) => ({ index, name: f.name, type: f.type, size: f.size })) };
+      }
+      if (message.type === 'xhs-media-chunk') {
+        const file = xhsJobs.get(sender.tab.id)?.files[message.index];
+        if (!file || !Number.isSafeInteger(message.offset) || message.offset < 0) throw Error('附件请求无效。'); return blobChunk(file, message.offset);
+      }
+      xhsJobs.delete(sender.tab.id); return {};
+    }
     if(who==='content' && Object.hasOwn(message,'owner')) {
       const owner=handleOf(message.owner);
       if(owners.get(sender.tab.id)!==owner){owners.set(sender.tab.id,owner);engine.revision++;}
@@ -167,6 +216,8 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
       if(message.type==='bookmarks-configure'){const result=await bookmarks.configure(message.owner,message.automatic);await broadcast({type:'bookmarks-preference',owner:message.owner,...result});return result;}
       return bookmarks.capture(message.owner,message.items);
     }
+    if(message.type==='site-link-state'&&who==='admin')return{enabled:await siteLinkEnabled(),origins:SITE_LINK_ORIGINS};
+    if(message.type==='site-link-sync'&&who==='admin')return syncBridge();
     if (who !== 'admin') throw new Error('只能在扩展设置中执行此操作');
     if(message.type==='posts-fill')return openFill(message.id);
     if(message.type==='posts-sync'){await syncPosts();return{};}
@@ -233,4 +284,4 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
   })().then(data => reply({ ok: true, data }), error => reply({ ok: false, error: error.message || '操作失败，请重试' }));
   return true;
 });
-chrome.tabs.onRemoved.addListener(id=>{owners.delete(id);fillJobs.delete(id);});
+chrome.tabs.onRemoved.addListener(id=>{owners.delete(id);fillJobs.delete(id);xhsJobs.delete(id);});
