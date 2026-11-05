@@ -10,6 +10,7 @@ import { initBookmarksUI } from './ui-bookmarks.js';
 import { initWorkspaceUI } from './ui-workspace.js';
 import { initPostsUI } from './ui-posts.js';
 import { initCommunityUI } from './ui-community.js';
+import { initSiteLinkUI } from './ui-site-link.js';
 import { initXNavUI } from './ui-xnav.js';
 import { normalizeNav } from './x-nav.js';
 import { Workspace } from './workspace.js';
@@ -191,6 +192,7 @@ const workspaceUI=initWorkspaceUI({send,notice,glyph});
 const postsUI=initPostsUI({send,notice,glyph,demo});
 const xnavUI=initXNavUI({send,notice});
 const communityUI=initCommunityUI({send,notice,demo});
+initSiteLinkUI({send,notice,demo});
 for(const b of document.querySelectorAll('[data-account-view]'))b.onclick=()=>{notice('');void tab(b.dataset.accountView).catch(e=>notice(e.message,true));};
 for(const b of document.querySelectorAll('nav button[data-tab]'))b.addEventListener('click',()=>{notice('');void tab(b.dataset.tab).catch(e=>notice(e.message,true));});
 function renderAccounts(){

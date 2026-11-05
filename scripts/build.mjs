@@ -15,12 +15,12 @@ await cp(path.join(root, 'LICENSE'), path.join(output, 'LICENSE'));
 await cp(path.join(root, 'node_modules/lucide/LICENSE'), path.join(output, 'LICENSE.lucide'));
 await cp(path.join(root, 'node_modules/pinyin-pro/LICENSE'), path.join(output, 'LICENSE.pinyin-pro'));
 await icons(output);
-await Promise.all(['background', 'page-evidence', 'content', 'mentions', 'bookmark-content', 'workspace-content', 'post-fill', 'x-nav-content', 'self-check-content', 'ui'].map(name => build({ entryPoints: [path.join(root, `src/${name}.js`)], bundle: true, outfile: path.join(output, `${name}.js`), format: name === 'background' ? 'esm' : 'iife', target: 'chrome120', minify: false, legalComments: 'eof' })));
+await Promise.all(['background', 'page-evidence', 'content', 'mentions', 'bookmark-content', 'workspace-content', 'post-fill', 'x-nav-content', 'self-check-content', 'site-bridge', 'xhs-fill', 'ui'].map(name => build({ entryPoints: [path.join(root, `src/${name}.js`)], bundle: true, outfile: path.join(output, `${name}.js`), format: name === 'background' ? 'esm' : 'iife', target: 'chrome120', minify: false, legalComments: 'eof' })));
 await buildWriter(root, output);
 const manifest = {
   manifest_version: 3, name: '乔木 X 助手 · Qiaomu X Helper', version: pkg.version,
   description: '整理 X 回复、快捷搜索、查看传播表现、导出书签、管理写作模型并编辑 X 长文草稿。', minimum_chrome_version: '120',
-  permissions: ['storage', 'offscreen', 'alarms'], optional_permissions: ['nativeMessaging', 'notifications'], host_permissions: ['https://x.com/*', 'https://twitter.com/*', 'https://www.x.com/*', 'https://www.twitter.com/*', ...BUILTIN_MEDIA_HOST_PERMISSIONS],
+  permissions: ['storage', 'offscreen', 'alarms', 'scripting'], optional_permissions: ['nativeMessaging', 'notifications'], host_permissions: ['https://x.com/*', 'https://twitter.com/*', 'https://www.x.com/*', 'https://www.twitter.com/*', ...BUILTIN_MEDIA_HOST_PERMISSIONS],
   optional_host_permissions: ['https://*/*', 'http://*/*'],
   background: { service_worker: 'background.js', type: 'module' },
   action: { default_icon: {16:'icons/icon-16.png',32:'icons/icon-32.png'}, default_popup: 'ui.html?popup=1', default_title: '乔木 X 助手' },

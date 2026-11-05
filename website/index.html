@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>乔木 X 助手 · Qiaomu X Helper — 少刷一点噪音，多写一点自己的想法</title>
+<meta name="description" content="乔木 X 助手是一款开源 Chrome 扩展：整理 X 回复、找回书签、在一处查资料写文章配图，再直接送进 X 草稿。数据默认保存在本机，发帖由你确认。当前版本 0.5.2 Preview。">
+<link rel="canonical" href="https://xhelper.qiaomu.ai/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="乔木 X 助手">
+<meta property="og:title" content="乔木 X 助手 — 少刷一点噪音，多写一点自己的想法">
+<meta property="og:description" content="给经常在 X 阅读、收藏和创作的人：整理回复、找回书签，在一处查资料、写文章、配图，再直接送进 X 草稿。MIT 开源，数据默认保存在本机。">
+<meta property="og:url" content="https://xhelper.qiaomu.ai/">
+<meta property="og:image" content="https://xhelper.qiaomu.ai/assets/img/hero-050.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@vista8">
+<meta name="twitter:title" content="乔木 X 助手 — 从收藏走向表达">
+<meta name="twitter:description" content="开源 Chrome 扩展：整理回复、找回书签、查资料写文章配图，直接送进 X 草稿。">
+<meta name="twitter:image" content="https://xhelper.qiaomu.ai/assets/img/hero-050.jpg">
+<link rel="icon" type="image/png" href="/assets/img/icon.png">
+<link rel="apple-touch-icon" href="/assets/img/icon.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "乔木 X 助手 · Qiaomu X Helper",
+  "applicationCategory": "BrowserApplication",
+  "operatingSystem": "Chrome",
+  "softwareVersion": "0.5.2",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" },
+  "author": { "@type": "Person", "name": "向阳乔木", "url": "https://x.com/vista8" },
+  "url": "https://xhelper.qiaomu.ai/",
+  "downloadUrl": "https://github.com/joeseesun/qiaomu-x-helper/releases/tag/v0.5.2",
+  "description": "给经常在 X 阅读、收藏和创作的人：整理回复、找回书签，在一处查资料、写文章、配图，再直接送进 X 草稿。",
+  "license": "https://github.com/joeseesun/qiaomu-x-helper/blob/main/LICENSE"
+}
+</script>
+<style>
+:root{
+  --bg:#fafaf7;
+  --surface:#ffffff;
+  --ink:#1c2420;
+  --ink-2:#4b5560;
+  --ink-3:#8a948e;
+  --line:#e4e7e2;
+  --accent:#166534;
+  --accent-soft:#eaf3ec;
+  --accent-ink:#14532d;
+  --warn-bg:#fdf6ec;
+  --warn-line:#ecd9b8;
+  --radius:14px;
+  --maxw:1080px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--ink);
+  line-height:1.75;font-size:16px;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--accent-ink);text-decoration:none}
+a:hover{text-decoration:underline}
+img{max-width:100%;display:block}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+section{padding:72px 0}
+h2{font-size:28px;line-height:1.35;letter-spacing:-.01em;margin-bottom:8px}
+.sub{color:var(--ink-2);margin-bottom:36px;max-width:640px}
+.eyebrow{font-size:13px;letter-spacing:.12em;color:var(--accent);font-weight:600;text-transform:uppercase;margin-bottom:10px}
+
+/* header */
+header{position:sticky;top:0;z-index:50;background:rgba(250,250,247,.88);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;gap:20px;height:60px;max-width:var(--maxw);margin:0 auto;padding:0 24px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;color:var(--ink)}
+.brand img{width:26px;height:26px;border-radius:6px}
+.brand:hover{text-decoration:none}
+.ver-tag{font-size:11.5px;font-weight:600;color:var(--accent-ink);background:var(--accent-soft);border:1px solid #cfe3d4;padding:2px 8px;border-radius:99px}
+.nav-links{margin-left:auto;display:flex;gap:22px;font-size:14px}
+.nav-links a{color:var(--ink-2)}
+.nav-links a:hover{color:var(--ink);text-decoration:none}
+@media(max-width:720px){.nav-links{display:none}}
+
+/* hero */
+.hero{padding:88px 0 64px}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+@media(max-width:860px){.hero-grid{grid-template-columns:1fr}}
+.hero h1{font-size:40px;line-height:1.25;letter-spacing:-.02em;margin:14px 0 16px}
+.hero p.lead{font-size:17px;color:var(--ink-2);max-width:520px}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.badge{font-size:12.5px;color:var(--ink-2);border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:3px 12px}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:600;padding:12px 22px;border-radius:10px;border:1px solid transparent;transition:transform .12s ease, box-shadow .12s ease}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+.btn-primary{background:var(--accent-ink);color:#fff;box-shadow:0 1px 2px rgba(20,83,45,.25)}
+.btn-primary:hover{background:#0f4225}
+.btn-ghost{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:#c8cec6}
+.store-note{font-size:13px;color:var(--ink-3);margin-top:14px}
+.hero-shot{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:0 20px 50px -24px rgba(28,36,32,.28);background:var(--surface)}
+.hero-shot figcaption{font-size:12.5px;color:var(--ink-3);padding:10px 14px;border-top:1px solid var(--line);background:var(--surface)}
+
+/* problem table */
+.pairs{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:760px){.pairs{grid-template-columns:1fr}}
+.pair{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+.pair .q{font-size:14px;color:var(--ink-3);margin-bottom:6px}
+.pair .a{font-size:15.5px;font-weight:550}
+
+/* features */
+.feat{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center;padding:40px 0;border-top:1px solid var(--line)}
+.feat:first-of-type{border-top:none}
+.feat.flip .feat-text{order:2}
+@media(max-width:860px){.feat{grid-template-columns:1fr;gap:24px}.feat.flip .feat-text{order:0}}
+.feat h3{font-size:22px;margin-bottom:10px;letter-spacing:-.01em}
+.feat p{color:var(--ink-2);font-size:15.5px}
+.feat ul{margin:12px 0 0 1.2em;color:var(--ink-2);font-size:15px}
+.feat ul li{margin-bottom:6px}
+.shot{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:0 14px 40px -22px rgba(28,36,32,.25);background:var(--surface)}
+.shot figcaption{font-size:12.5px;color:var(--ink-3);padding:9px 14px;border-top:1px solid var(--line)}
+.shot.row{display:grid;grid-template-columns:1fr 1fr}
+.shot.row figcaption{grid-column:1/-1}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;counter-reset:s}
+@media(max-width:760px){.steps{grid-template-columns:1fr}}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.step::before{counter-increment:s;content:counter(s);display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-weight:700;font-size:14px;margin-bottom:12px}
+.step h4{font-size:16px;margin-bottom:6px}
+.step p{font-size:14px;color:var(--ink-2)}
+.step code{background:#f0f1ee;border-radius:5px;padding:1px 6px;font-size:13px}
+.tip{margin-top:20px;background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:12px;padding:14px 18px;font-size:14px;color:#6b5a3e}
+
+/* matrix table */
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:14.5px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#f4f5f2;font-weight:600;font-size:13.5px;color:var(--ink-2)}
+tr:last-child td{border-bottom:none}
+.tbl-scroll{overflow-x:auto;border-radius:var(--radius)}
+
+/* changelog */
+.log{border-left:2px solid var(--line);margin-left:6px;padding-left:26px;display:grid;gap:26px}
+.log-item{position:relative}
+.log-item::before{content:"";position:absolute;left:-32px;top:8px;width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--bg)}
+.log-item .lv{font-weight:700;font-size:15.5px}
+.log-item .ld{font-size:13px;color:var(--ink-3);margin-left:8px}
+.log-item p{font-size:14.5px;color:var(--ink-2);margin-top:4px}
+
+/* faq */
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:10px}
+.faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:15.5px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--ink-3);font-size:20px;font-weight:400;transition:transform .15s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq .ans{padding:0 20px 16px;color:var(--ink-2);font-size:14.5px}
+
+/* footer */
+footer{border-top:1px solid var(--line);background:var(--surface);padding:48px 0 40px;margin-top:24px}
+.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:32px}
+@media(max-width:760px){.foot-grid{grid-template-columns:1fr}}
+.foot-grid h5{font-size:13px;color:var(--ink-3);font-weight:600;letter-spacing:.08em;margin-bottom:12px}
+.foot-grid ul{list-style:none}
+.foot-grid li{margin-bottom:8px;font-size:14px}
+.foot-grid li a{color:var(--ink-2)}
+.foot-brand p{font-size:13.5px;color:var(--ink-3);margin-top:10px;max-width:320px}
+.foot-bottom{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:36px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-3)}
+.icon-actions{margin-left:auto;display:flex;gap:10px}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--bg);cursor:pointer;color:var(--ink-2);transition:border-color .12s,color .12s}
+.icon-btn:hover{border-color:#c8cec6;color:var(--ink)}
+.icon-btn svg{width:18px;height:18px}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.open{display:flex}
+.modal-backdrop{position:absolute;inset:0;background:rgba(28,36,32,.45)}
+.modal-card{position:relative;background:var(--surface);border-radius:16px;max-width:360px;width:100%;padding:24px;text-align:center;box-shadow:0 24px 60px -20px rgba(0,0,0,.35)}
+.modal-card h4{font-size:17px;margin-bottom:6px}
+.modal-card p{font-size:13.5px;color:var(--ink-2);margin-bottom:14px}
+.modal-card img{width:240px;max-width:100%;height:auto;margin:0 auto;border-radius:8px}
+.modal-close{position:absolute;top:10px;right:10px;width:32px;height:32px;border:none;border-radius:8px;background:transparent;font-size:20px;color:var(--ink-3);cursor:pointer;line-height:1}
+.modal-close:hover{background:#f0f1ee;color:var(--ink)}
+.modal-links{display:flex;justify-content:center;gap:16px;margin-top:14px;font-size:14px}
+
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn{transition:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="nav" aria-label="主导航">
+    <a class="brand" href="/">
+      <img src="/assets/img/icon.png" alt="乔木 X 助手图标" width="26" height="26">
+      乔木 X 助手
+      <span class="ver-tag">0.5.2 Preview</span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">功能</a>
+      <a href="#install">安装</a>
+      <a href="#changelog">更新记录</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://github.com/joeseesun/qiaomu-x-helper" rel="noopener">GitHub</a>
+    </div>
+  </nav>
+</header>
+
+<main>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Qiaomu X Helper · 开源 Chrome 扩展</div>
+      <h1>少刷一点噪音，<br>多写一点自己的想法。</h1>
+      <p class="lead">给经常在 X 阅读、收藏和创作的人：整理回复、找回书签，在一处查资料、写文章、配图，再直接送进 X 草稿。</p>
+      <div class="badges">
+        <span class="badge">MIT 开源</span>
+        <span class="badge">数据默认保存在本机</span>
+        <span class="badge">发帖由你确认</span>
+      </div>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/joeseesun/qiaomu-x-helper/releases/tag/v0.5.2" rel="noopener">下载 0.5.2 Preview 安装包</a>
+        <a class="btn btn-ghost" href="#install">三步安装</a>
+      </div>
+      <p class="store-note">Chrome 商店公开版为 0.2.0；0.5.2 已送审，审核通过后自动发布。想现在体验新版写作功能，请安装 GitHub Preview 包。</p>
+    </div>
+    <figure class="hero-shot">
+      <img src="/assets/img/hero-050.jpg" alt="乔木 X 助手主视觉：从收藏走向表达" width="1400" height="700" fetchpriority="high">
+      <figcaption>概念主视觉，由扩展内置生图生成</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- PROBLEMS -->
+<section id="problems" style="padding-top:0">
+  <div class="wrap">
+    <h2>别让好内容，只剩一个收藏按钮</h2>
+    <p class="sub">刷到好帖再也找不到；回复区被重复内容打断；写文章时在编辑器、搜索和图库之间来回切换。X Helper 把这些常用步骤放到顺手的位置。</p>
+    <div class="pairs">
+      <div class="pair"><div class="q">回复太杂，读不下去</div><div class="a">按自己的规则折叠回复，随时展开、纠正或始终保留某位作者</div></div>
+      <div class="pair"><div class="q">收藏了，但忘了为什么</div><div class="a">给书签加备注和标签，搜索正文与作者，导出 Markdown 带走</div></div>
+      <div class="pair"><div class="q">好回复不能现在写</div><div class="a">加入待回复，在本机慢慢写草稿，再填入对应 X 回复框</div></div>
+      <div class="pair"><div class="q">文章卡在开头或结构</div><div class="a">AI 看当前文章和选区提出修改卡片，点接受后才改正文</div></div>
+      <div class="pair"><div class="q">写着写着要查事实、找图</div><div class="a">在写作对话中联网查资料、打开来源、找图片或生成配图</div></div>
+      <div class="pair"><div class="q">排好版后又要复制一遍</div><div class="a">直接点「发布到 X」，把文章与配图送入 X 原生草稿</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" style="padding-top:0">
+  <div class="wrap">
+    <h2>核心功能</h2>
+    <p class="sub">以下界面截图均来自实际生产界面，文章、账号与服务响应使用明确标注的示例数据。</p>
+
+    <div class="feat">
+      <div class="feat-text">
+        <h3>从想法，到文章</h3>
+        <p>正文始终由你掌控。所见即所得与 Markdown 可切换，大纲跟着文章走；代码、表格、公式和 Mermaid 可以一起写。文章自动保存在本机，支持回收站、Markdown 和含图片 ZIP 导入导出。</p>
+        <ul>
+          <li>AI 理解当前文章、选区和引用资料，建议以修改卡片呈现，点接受才改正文</li>
+          <li>主按钮就是「发布到 X」：准备文章与图片、写入 X 文章编辑器草稿，最后检查与发布留给你</li>
+          <li>微信、知乎、微博、B 站、小红书等常见媒体源已内置，其他来源自动识别并申请权限</li>
+        </ul>
+      </div>
+      <figure class="shot">
+        <img src="/assets/img/writer-050.png" alt="实际写作界面，使用合成文章与示例 AI 回复" loading="lazy" width="1400" height="760">
+        <figcaption>实际写作界面，使用合成文章与示例 AI 回复</figcaption>
+      </figure>
+    </div>
+
+    <div class="feat flip">
+      <div class="feat-text">
+        <h3>查资料，找图，继续写</h3>
+        <ul>
+          <li>联网搜索：在对话里搜索与读取公开网页，查看工具进度和可点击来源，也能随时关闭</li>
+          <li>图片搜索：连接 Unsplash 或兼容代理，搜索、查看来源、下载并插入图片</li>
+          <li>独立图库：上传图片、访问主动选定的本地文件夹，管理生成结果</li>
+          <li>后台配图：关闭侧栏后任务继续，重开可找回进度；中断的任务不会自动重新计费</li>
+        </ul>
+        <p style="margin-top:10px">联网、素材和图片生成使用你配置的第三方服务，可能产生费用；图片许可和用途仍需你核对。</p>
+      </div>
+      <figure class="shot">
+        <img src="/assets/img/gallery-050.jpg" alt="实际图库界面，使用上传的概念插画示例" loading="lazy" width="1400" height="760">
+        <figcaption>实际图库界面，使用上传的概念插画示例</figcaption>
+      </figure>
+    </div>
+
+    <div class="feat">
+      <div class="feat-text">
+        <h3>模型一次配好，写作时随手切换</h3>
+        <p>先连接服务，再选模型；支持获取模型列表、搜索、手动添加、编辑、删除、启用和默认模型。写作时可直接切换模型与支持的思考档位。</p>
+        <ul>
+          <li>配图单独选择服务与多个模型；联网搜索和图库来源也有自己的设置</li>
+          <li>服务端点改变时清除原密钥，防止把旧服务凭据发往新地址</li>
+          <li>配置备份默认不包含 API Key，登录会话始终不导出；恢复前预览并合并，本机已有配置优先</li>
+        </ul>
+      </div>
+      <figure class="shot">
+        <img src="/assets/img/models-050.png" alt="实际模型设置界面，服务与模型为示例" loading="lazy" width="1400" height="760">
+        <figcaption>实际模型设置界面，服务与模型为示例</figcaption>
+      </figure>
+    </div>
+
+    <div class="feat flip">
+      <div class="feat-text">
+        <h3>读过的好内容，留得住</h3>
+        <p>打开 X 书签页即保存已加载的书签，支持暂停。备注、标签、原帖链接和正文一起导出 Markdown，适合带到自己的笔记库。书签按登录账号隔离，移除本机副本不会取消 X 收藏。</p>
+        <ul>
+          <li>高级搜索把关键词、作者、日期和互动条件组成可复用查询，直接在 X 打开</li>
+          <li>待回复保留原文与本机草稿；常用 @ 支持昵称、账号、备注、拼音和首字母搜索</li>
+          <li>它们不会替你发送回复</li>
+        </ul>
+      </div>
+      <figure class="shot row">
+        <img src="/assets/img/bookmarks-050.png" alt="实际书签管理界面，内容为示例数据" loading="lazy" width="1400" height="760">
+        <img src="/assets/img/advanced-search.png" alt="高级搜索界面" loading="lazy" width="640" height="1744" style="object-fit:cover;object-position:top;max-height:100%">
+        <figcaption>书签管理与高级搜索，内容为示例数据</figcaption>
+      </figure>
+    </div>
+
+    <div class="feat">
+      <div class="feat-text">
+        <h3>整理回复，但不替你做判断</h3>
+        <p>按自己的规则折叠回复：本地词汇规则支持昵称、简介、正文范围与保留名单；可选的 AI 回复判断使用独立的 Jev 决策服务，未知或无效结果保留原文。</p>
+        <ul>
+          <li>回复判断是可能出错的参考，不能证明一个人是 AI 或机器人</li>
+          <li>不自动拉黑账号，不扫描全部历史，不自动无限滚动</li>
+          <li>可选社区订阅与贡献默认关闭</li>
+        </ul>
+      </div>
+      <figure class="shot">
+        <img src="/assets/img/reading-050.png" alt="阅读与回复整理界面" loading="lazy" width="700" height="784">
+        <figcaption>阅读界面，内容为示例数据</figcaption>
+      </figure>
+    </div>
+
+    <div class="feat flip">
+      <div class="feat-text">
+        <h3>常用 @、发帖排期与 X 侧栏</h3>
+        <ul>
+          <li>在 X 编辑器点 @ 或输入 <code>@@</code>，按昵称、拼音、首字母搜索联系人；Shift 一次插入多人</li>
+          <li>发帖页写正文、拖入图片 / GIF / 视频，存草稿或排进「下一个空档」；填入 X 后由 X 自带定时面板发出</li>
+          <li>X 侧栏逐项开关与排序，可添加自己的站内路径、https 网站或插件页面入口</li>
+        </ul>
+        <p style="margin-top:10px">到点提醒与排期内容只存在扩展本机的 IndexedDB，不上传、不进 Chrome 同步。</p>
+      </div>
+      <figure class="shot">
+        <img src="/assets/img/contacts.png" alt="常用联系人页面，全部为模拟账号" loading="lazy" width="400" height="880" style="max-width:340px;margin:0 auto">
+        <figcaption>常用联系人页面，全部为模拟账号</figcaption>
+      </figure>
+    </div>
+
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section id="install" style="padding-top:0">
+  <div class="wrap">
+    <h2>三步开始</h2>
+    <p class="sub">不需要先装 PKG，也不需要先填 API Key。AI 与外部图库是按需连接的可选功能。</p>
+    <div class="steps">
+      <div class="step">
+        <h4>下载安装包</h4>
+        <p>打开 <a href="https://github.com/joeseesun/qiaomu-x-helper/releases/tag/v0.5.2" rel="noopener">v0.5.2 Release</a>，下载 <code>qiaomu-x-helper-0.5.2-chrome.zip</code> 并解压。</p>
+      </div>
+      <div class="step">
+        <h4>加载扩展</h4>
+        <p>在 Chrome 地址栏输入 <code>chrome://extensions</code>，开启「开发者模式」，点「加载已解压的扩展程序」，选择包含 <code>manifest.json</code> 的解压目录。</p>
+      </div>
+      <div class="step">
+        <h4>先做一件有用的事</h4>
+        <p>打开 X 书签页保存已加载内容，或点扩展里的「写作」，开始写第一篇文章。</p>
+      </div>
+    </div>
+    <div class="tip">升级时保留原目录、替换文件后重新加载；先导出重要文章与配置。Chrome 商店公开版为 0.2.0，0.5.2 审核通过后会自动发布到<a href="https://chromewebstore.google.com/detail/npbekbjlplpiopckedfiggpdkgaaflll" rel="noopener">商店页面</a>。</div>
+
+    <div style="margin-top:44px">
+      <h3 style="font-size:20px;margin-bottom:14px">按需连接，不用一次配完</h3>
+      <div class="tbl-scroll">
+      <table>
+        <thead><tr><th style="width:55%">功能</th><th>需要什么</th></tr></thead>
+        <tbody>
+          <tr><td>文章编辑、书签、搜索条件、待回复、常用 @、本地词汇规则</td><td>扩展即可，无 API Key</td></tr>
+          <tr><td>AI 写作</td><td>自备文字服务密钥，或使用支持的账号登录入口</td></tr>
+          <tr><td>AI 回复判断</td><td>独立的 Jev 决策服务配置；不是普通聊天接口</td></tr>
+          <tr><td>联网查资料</td><td>DeepSeek Search / Fetch 或 Brave Search 凭据</td></tr>
+          <tr><td>云端配图</td><td>图片服务凭据与可用模型；支持兼容接口及自部署即梦服务</td></tr>
+          <tr><td>Unsplash 图片搜索</td><td>Unsplash Access Key 或兼容代理</td></tr>
+          <tr><td>本机 Codex 生图</td><td>可选：已登录的 Codex、包含生图协议的乔木助手、当前扩展来源注册</td></tr>
+          <tr><td>写入 X 文章草稿</td><td>已登录 X，且账号拥有文章功能</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRIVACY -->
+<section id="privacy" style="padding-top:0">
+  <div class="wrap">
+    <h2>数据与判断的边界</h2>
+    <p class="sub">文章、书签和配置默认留在本浏览器，不使用 Chrome Sync。你发起 AI 操作时，所需的正文、选区、指令或图片会发往所选服务；搜索词与网页地址会发给搜索服务。第三方的收费和留存政策由各服务决定。</p>
+    <div class="pairs">
+      <div class="pair"><div class="q">不替你发布</div><div class="a">扩展只把文章填入 X 草稿，最后的检查与发布永远由你确认</div></div>
+      <div class="pair"><div class="q">不替你定性</div><div class="a">AI 判断是可能出错的参考，未知结果保留原文，不自动拉黑账号</div></div>
+      <div class="pair"><div class="q">不留存浏览历史</div><div class="a">仅处理已加载内容，不扫描全部历史、不自动无限滚动</div></div>
+      <div class="pair"><div class="q">凭据分别管理</div><div class="a">文字、搜索、配图、Jev 的密钥分别配置，不跨服务复制</div></div>
+    </div>
+    <p style="margin-top:16px;font-size:14px;color:var(--ink-3)">更多说明见仓库 <a href="https://github.com/joeseesun/qiaomu-x-helper/blob/main/PRIVACY.md" rel="noopener">PRIVACY.md</a> 与 <a href="https://github.com/joeseesun/qiaomu-x-helper/blob/main/docs/RESEARCH.md" rel="noopener">行为与研究记录</a>。</p>
+  </div>
+</section>
+
+<!-- CHANGELOG -->
+<section id="changelog" style="padding-top:0">
+  <div class="wrap">
+    <h2>更新记录</h2>
+    <p class="sub">从 0.1.10 到 0.5.2，每个版本都在回答同一个问题：怎么让 X 上的好内容，变成你自己的表达。完整记录见 <a href="https://github.com/joeseesun/qiaomu-x-helper/blob/main/CHANGELOG.md" rel="noopener">CHANGELOG.md</a>。</p>
+    <div class="log">
+      <div class="log-item">
+        <span class="lv">0.5.2 Preview</span><span class="ld">2026-10-21 · 侧栏与常用 @</span>
+        <p>X 侧栏逐项显示 / 隐藏与排序，可添加站内路径、https 网站或插件页面入口；常用 @ 说明优化，侧栏保存失败可重试。</p>
+      </div>
+      <div class="log-item">
+        <span class="lv">0.5.1 Preview</span><span class="ld">2026-10-21 · 发帖排期与长文传输</span>
+        <p>本机发帖草稿、图片 / GIF / 视频附件、每周排期和到点提醒；常用 @ 支持 @@ 与本帖相关联系人；媒体准备失败先停在本地。</p>
+      </div>
+      <div class="log-item">
+        <span class="lv">0.5.0 Preview</span><span class="ld">2026-10-21 · 从阅读到写作</span>
+        <p>写作工作台、两步模型配置、联网搜索、图片搜索与独立图库；主按钮改为「发布到 X」，直接写入 X 文章草稿。</p>
+      </div>
+      <div class="log-item">
+        <span class="lv">0.4.1 · 0.3.x Preview</span><span class="ld">2026-10-20 · 账号记忆与待回复</span>
+        <p>记住账号的人工判断；待回复会话列表与本机草稿一键填入；传播表现与兴趣反馈；可选邀请制社区标注。</p>
+      </div>
+      <div class="log-item">
+        <span class="lv">0.2.0 Preview</span><span class="ld">2026-10-20 · 阅读与互动工作台</span>
+        <p>高级搜索、KOL 值得关注、本机兴趣偏好、待回复队列与复盘观测。当前 Chrome 商店公开版本。</p>
+      </div>
+      <div class="log-item">
+        <span class="lv">0.1.x Preview</span><span class="ld">2026-10-18 ~ 19 · 书签、常用 @ 与品牌统一</span>
+        <p>书签页自动保存与 Markdown 导出；常用 @ 进入 X 原生工具行；统一品牌为「乔木 X 助手」并提交商店审核。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" style="padding-top:0">
+  <div class="wrap">
+    <h2>常见问题</h2>
+    <p class="sub"></p>
+    <div class="faq">
+      <details>
+        <summary>不配置 API Key 能用吗？</summary>
+        <div class="ans">能。文章编辑、书签、搜索条件、待回复、常用 @、本地词汇规则都不需要 API Key。AI 写作、联网搜索、云端配图和 AI 回复判断是按需连接的可选功能，使用你自己配置的第三方服务，费用与留存政策由各服务决定。</div>
+      </details>
+      <details>
+        <summary>GitHub Preview 和 Chrome 商店版有什么区别？</summary>
+        <div class="ans">截至 2026-10-21，Chrome 商店公开版为 0.2.0；0.5.2 已送审，审核通过后自动发布到同一商店条目。GitHub Release 的 Preview 包包含最新的写作工作台、图库、发帖排期等功能，安装方式为「加载已解压的扩展程序」。</div>
+      </details>
+      <details>
+        <summary>我的数据存在哪里？</summary>
+        <div class="ans">文章、书签、配置、发帖排期和附件默认保存在本浏览器的 IndexedDB，不使用 Chrome Sync。配置备份默认不包含 API Key，账号登录会话始终不导出。只有你主动发起 AI / 搜索操作时，相关内容才会发往你配置的服务。</div>
+      </details>
+      <details>
+        <summary>它会替我发帖或回复吗？</summary>
+        <div class="ans">不会。发布到 X 只是把文章与配图写入 X 原生草稿；排期帖子由 X 自带的定时面板发出；待回复只是填入对应回复框。所有最终确认都留给你。</div>
+      </details>
+      <details>
+        <summary>AI 回复判断准确吗？会不会误伤？</summary>
+        <div class="ans">回复判断是有可能出错的参考，不能证明一个人是 AI 或机器人。未知或无效结果保留原文，不自动拉黑账号；本地先验只在多项线索同时成立且模型分数已偏向 AI 时才上调，折叠也随时可以展开和纠正。</div>
+      </details>
+      <details>
+        <summary>「发布到 X」需要什么条件？</summary>
+        <div class="ans">需要已登录 X，且账号本身拥有 X Articles（长文）权限。媒体没准备好时扩展会先停在本地，不会打开 X 或丢掉图片继续写入。</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="/">
+          <img src="/assets/img/icon.png" alt="" width="26" height="26">
+          乔木 X 助手
+        </a>
+        <p>由 <a href="https://x.com/vista8" rel="noopener">向阳乔木</a> 维护的开源项目。写作、模型与图库模块改编自 Qiaomu Clipper，X 草稿引擎包含 xPoster 的 MIT 代码。本项目与 X 及模型服务商没有隶属或官方背书关系。</p>
+      </div>
+      <div>
+        <h5>项目</h5>
+        <ul>
+          <li><a href="https://github.com/joeseesun/qiaomu-x-helper" rel="noopener">GitHub 仓库</a></li>
+          <li><a href="https://github.com/joeseesun/qiaomu-x-helper/releases/tag/v0.5.2" rel="noopener">下载 0.5.2 Preview</a></li>
+          <li><a href="https://chromewebstore.google.com/detail/npbekbjlplpiopckedfiggpdkgaaflll" rel="noopener">Chrome 商店（0.2.0）</a></li>
+          <li><a href="https://github.com/joeseesun/qiaomu-x-helper/blob/main/CHANGELOG.md" rel="noopener">完整更新记录</a></li>
+          <li><a href="https://github.com/joeseesun/qiaomu-x-helper/issues" rel="noopener">问题反馈</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>文档</h5>
+        <ul>
+          <li><a href="https://github.com/joeseesun/qiaomu-x-helper/blob/main/PRIVACY.md" rel="noopener">隐私说明</a></li>
+          <li><a href="https://github.com/joeseesun/qiaomu-x-helper/blob/main/docs/QA.md" rel="noopener">验证记录</a></li>
+          <li><a href="https://github.com/joeseesun/qiaomu-x-helper/blob/main/docs/store/SUBMISSION.md" rel="noopener">商店提交状态</a></li>
+          <li><a href="https://github.com/joeseesun/qiaomu-x-helper/blob/main/LICENSE" rel="noopener">MIT License</a></li>
+          <li><a href="https://tuijian.qiaomu.ai/" rel="noopener">乔木推荐</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 向阳乔木 · Qiaomu X Helper · MIT</span>
+      <div class="icon-actions">
+        <a class="icon-btn" href="https://github.com/joeseesun/qiaomu-x-helper" rel="noopener" aria-label="GitHub" title="GitHub">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.27-.01-1.17-.02-2.12-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.14 0 1.55-.01 2.79-.01 3.17 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+        </a>
+        <a class="icon-btn" href="https://x.com/vista8" rel="noopener" aria-label="X（@vista8）" title="X（@vista8）">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.41l-5.8-7.58-6.64 7.58H.47l8.6-9.83L0 1.15h7.6l5.24 6.93 6.06-6.93zm-1.29 19.5h2.04L6.49 3.24H4.3l13.31 17.41z"/></svg>
+        </a>
+        <button class="icon-btn" id="btn-follow" aria-label="关注" title="关注公众号">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-reward" aria-label="打赏" title="打赏支持">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- modals -->
+<div class="modal" id="modal-reward" role="dialog" aria-modal="true" aria-labelledby="reward-title">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card">
+    <button class="modal-close" data-close aria-label="关闭">×</button>
+    <h4 id="reward-title">打赏支持</h4>
+    <p>如果这个扩展对你有帮助，欢迎请作者喝杯咖啡。</p>
+    <img src="/assets/brand/qiaomu_reward_qr.png" alt="打赏二维码">
+  </div>
+</div>
+<div class="modal" id="modal-follow" role="dialog" aria-modal="true" aria-labelledby="follow-title">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card">
+    <button class="modal-close" data-close aria-label="关闭">×</button>
+    <h4 id="follow-title">向阳乔木推荐看</h4>
+    <p>关注公众号，获取新工具与更新通知。</p>
+    <img src="/assets/brand/qiaomu_wechat_public_account_qr.jpg" alt="微信公众号「向阳乔木推荐看」二维码">
+    <div class="modal-links">
+      <a href="https://x.com/vista8" rel="noopener">X @vista8</a>
+      <a href="https://github.com/joeseesun/" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var lastFocus=null;
+  function openModal(id){
+    var m=document.getElementById(id);
+    if(!m)return;
+    lastFocus=document.activeElement;
+    m.classList.add('open');
+    document.body.style.overflow='hidden';
+    var btn=m.querySelector('.modal-close');
+    if(btn)btn.focus();
+  }
+  function closeModal(m){
+    m.classList.remove('open');
+    document.body.style.overflow='';
+    if(lastFocus&&lastFocus.focus)lastFocus.focus();
+  }
+  document.getElementById('btn-reward').addEventListener('click',function(){openModal('modal-reward')});
+  document.getElementById('btn-follow').addEventListener('click',function(){openModal('modal-follow')});
+  document.querySelectorAll('.modal').forEach(function(m){
+    m.addEventListener('click',function(e){
+      if(e.target.hasAttribute('data-close'))closeModal(m);
+    });
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){
+      document.querySelectorAll('.modal.open').forEach(closeModal);
+    }
+  });
+})();
+</script>
+<script defer src="https://umami.qiaomu.ai/script.js" data-website-id="287d4961-4fcb-4f64-9163-ae58d4b2fe7b" data-domains="xhelper.qiaomu.ai"></script>
+</body>
+</html>

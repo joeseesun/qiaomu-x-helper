@@ -117,6 +117,8 @@ npm run package
 
 产物在 `dist/chrome` 与 `artifacts/`。`npm run preview` 提供使用示例数据的页面，开发与预览脚本不进入安装包。
 
+产品官网源码在 `website/`（纯静态、无构建依赖），线上地址 https://xhelper.qiaomu.ai/ ，部署与更新说明见 [website/DEPLOY.md](website/DEPLOY.md)。
+
 本轮验证包括 **159 项 Node + 269 项 Vitest**、生产构建、真实浏览器中的生产 UI 夹具，以及一次真实 `deepseek/deepseek-flash` 流式写作调用。截图来自实际生产界面，文章、账号和服务响应使用明确标注的示例数据；概念主视觉由内置生图生成。
 
 浏览器安全策略阻止访问已安装扩展内部页，本轮未重验真实 X 草稿写入；搜索、Unsplash、云端/本机生图与各供应商账号登录未逐一实测。自动测试与页面夹具不能替代这些外部验收。详见[验证记录](docs/QA.md)与[Clipper 功能对照](docs/WRITER-PARITY.md)。
